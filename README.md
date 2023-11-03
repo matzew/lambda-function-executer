@@ -1,11 +1,17 @@
 # Executing Lambda Function in a container
 
-The source code for the `` container is Apache 2.0 license, and located [here](https://github.com/aws/aws-lambda-base-images/tree/go1.x).
-
 ## Build it
 
+### Base Container
+
 ```
-docker build -t <yours> .   
+docker build -f ./Dockerfile.base -t <docker.io/matzew/my-custom-lambda-runtime> .
+```
+
+### Function Container
+
+```
+docker build -f ./Dockerfile.function -t docker.io/matzew/my-lambda-function
 ```
 
 ## Run it

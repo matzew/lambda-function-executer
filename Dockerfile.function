@@ -1,0 +1,28 @@
+# Use the custom Lambda runtime as the base image
+FROM docker.io/matzew/my-custom-lambda-runtime:latest
+
+# Ensure we are using root to perform operations requiring elevated privileges
+USER root
+
+# Install the AWS Lambda RIE
+ADD https://github.com/aws/aws-lambda-runtime-interface-emulator/releases/latest/download/aws-lambda-rie /usr/local/bin/aws-lambda-rie
+RUN chmod +x /usr/local/bin/aws-lambda-rie
+
+# Create a non-root user and group
+RUN groupadd --system nonroot && useradd --system --create-home --gid nonroot nonroot
+
+WORKDIR /var/task
+
+# Copy your Lambda function code into the image
+COPY --chown=nonroot:nonroot ./bin/handler /var/task/
+
+# If your Lambda function has dependencies, install them
+# RUN go mod download
+
+EXPOSE 8080
+
+# Use the AWS Lambda RIE as the entrypoint
+ENTRYPOINT ["/usr/local/bin/aws-lambda-rie"]
+
+# Command can be left as is or you can directly call the handler
+CMD ["/var/task/handler"]

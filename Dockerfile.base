@@ -1,0 +1,36 @@
+# Start from a UBI base image
+FROM registry.access.redhat.com/ubi9/ubi:latest
+
+# Install necessary packages
+RUN yum install -y ca-certificates && \
+    yum update -y && \
+    yum clean all
+
+# Create a non-root user to run our application
+RUN adduser --system --create-home --uid 1001 myuser
+
+# Set necessary environment variables for the Lambda
+ENV LAMBDA_TASK_ROOT=/var/task \
+    LAMBDA_RUNTIME_DIR=/var/runtime \
+    PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
+    LD_LIBRARY_PATH=/var/lang/lib:/lib64:/usr/lib64:/var/runtime:/var/runtime/lib:/var/task:/var/task/lib
+
+# Copy the compiled binaries from your host machine to the container image
+COPY ./bin/bootstrap /var/runtime/bootstrap
+COPY ./bin/handler /var/task/handler
+
+# Set permissions for the runtime bootstrap and handler
+RUN chmod 755 /var/runtime/bootstrap /var/task/handler && \
+    chown -R myuser:myuser /var/runtime /var/task
+
+# Set the working directory to /var/task
+WORKDIR /var/task
+
+# Switch to non-root user
+USER myuser
+
+# Set the ENTRYPOINT to the runtime bootstrap
+ENTRYPOINT ["/var/runtime/bootstrap"]
+
+# The CMD directive is used to pass the name of the handler function
+CMD ["handler"]
